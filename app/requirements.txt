@@ -1,0 +1,15 @@
+fastapi
+uvicorn
+flup
+a2wsgi
+python-multipart
+numpy
+imutils
+opencv-python
+pytesseract
+scikit-learn
+roboflow
+supervision
+ultralytics
+onnx
+onnxruntime
