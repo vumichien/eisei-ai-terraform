@@ -18,7 +18,10 @@ def infer(image):
     label = result.names
     width, height = result.orig_shape[1], result.orig_shape[0]
     print(result.speed)
-    parsed_result = {'predictions': label[result.probs.top1], 'image': {'width': width, 'height': height}}
+    parsed_result = {
+        "predictions": label[result.probs.top1],
+        "image": {"width": width, "height": height},
+    }
     return parsed_result
 
 
@@ -34,7 +37,7 @@ async def process_image(image: UploadFile = File(...)):
 
 @app.get("/")
 def hello_world():
-    return 'Hello World from Detomo AI!'
+    return "Hello World from Detomo AI!"
 
 
 if __name__ == "__main__":

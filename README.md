@@ -55,6 +55,6 @@ lb_dns_name = <api_endpoint>
 
 ## Destroy Eisei AI API
 
-```bash 
+```bash
 terraform destroy
 ```
