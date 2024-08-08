@@ -25,12 +25,12 @@ mfa_serial = arn:aws:iam::<aws_account_id>:mfa/<username>
 aws-vault exec <profile_name> --no-session --duration=12h
 ```
 
-- Create ECR repository
+- Apply plan
 
 ```bash
 cd terraform
 terraform init
-terraform apply
+terraform apply -auto-approve
 ```
 
 Outputs:
@@ -44,5 +44,5 @@ browser : http://<instance_public_ip>:8080
 ## Destroy Eisei AI API
 
 ```bash
-terraform destroy
+terraform destroy -auto-approve
 ```
