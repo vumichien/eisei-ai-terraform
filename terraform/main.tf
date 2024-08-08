@@ -82,8 +82,8 @@ resource "aws_security_group" "main" {
 
 # Create an EC2 instance
 resource "aws_instance" "app_instance" {
-  ami                         = "ami-0e35aea09ae54a6db" # Replace with a valid Amazon Linux 2 AMI ID
-  instance_type               = "t2.medium"
+  ami                         = "ami-0e35aea09ae54a6db"
+  instance_type               = "t2.micro"
   subnet_id                   = element(aws_subnet.public[*].id, 0)
   vpc_security_group_ids      = [aws_security_group.main.id]
   associate_public_ip_address = true
@@ -92,19 +92,7 @@ resource "aws_instance" "app_instance" {
     volume_size = 30
   }
 
-  user_data = <<-EOF
-              #!/bin/bash
-              set -e  # Exit immediately if a command exits with a non-zero status
-
-              # Activate the virtual environment
-              source /home/ec2-user/venv/bin/activate
-
-              # Change to the app directory
-              cd /app/app
-
-              # Start FastAPI app on port 8080
-              nohup uvicorn main:app --host 0.0.0.0 --port 8080 &
-              EOF
+  user_data = file("user_data.sh")
 
   tags = {
     Name = "FastAPIAppInstance"
