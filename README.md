@@ -35,7 +35,7 @@ terraform apply -auto-approve
 
 Outputs:
 ```bash
-lb_dns_name = <instance_public_ip>
+instance_public_ip = <instance_public_ip>
 ```
 ## Check the API
 
