@@ -1,7 +1,7 @@
 terraform {
   required_providers {
     aws = {
-      source = "hashicorp/aws"
+      source  = "hashicorp/aws"
       version = "~> 3.0"
     }
   }
@@ -58,6 +58,20 @@ resource "aws_security_group" "main" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  ingress {
+    from_port   = 8080
+    to_port     = 8080
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -66,134 +80,53 @@ resource "aws_security_group" "main" {
   }
 }
 
-# Create an ECR repository
-resource "aws_ecr_repository" "api_ecr" {
-  name = "eisei-ai-api-repository"
+# Create an EC2 instance
+resource "aws_instance" "app_instance" {
+  ami                         = "ami-0f64af45aa96ba95c" # Replace with a valid Amazon Linux 2 AMI ID
+  instance_type               = "t2.medium"
+  subnet_id                   = element(aws_subnet.public[*].id, 0)
+  vpc_security_group_ids      = [aws_security_group.main.id]
+  associate_public_ip_address = true
 
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
-# Create an ECS cluster
-resource "aws_ecs_cluster" "main" {
-  name = "eisei-cluster"
-}
-
-# Create an IAM role for ECS tasks
-resource "aws_iam_role" "ecs_task_execution_role" {
-  name = "ecs_task_execution_role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Principal = {
-          Service = "ecs-tasks.amazonaws.com"
-        }
-      },
-    ]
-  })
-}
-
-resource "aws_iam_role_policy_attachment" "ecs_task_execution_policy" {
-  role       = aws_iam_role.ecs_task_execution_role.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
-}
-
-# Create an ECS task definition
-resource "aws_ecs_task_definition" "api" {
-  family                   = "eisei-api-task"
-  network_mode             = "awsvpc"
-  requires_compatibilities = ["FARGATE"]
-  cpu                      = "256"
-  memory                   = "512"
-  execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
-
-  container_definitions = jsonencode([
-    {
-      name      = "api-container"
-      image     = "${aws_ecr_repository.api_ecr.repository_url}:latest"
-      essential = true
-      portMappings = [
-        {
-          containerPort = 80
-          hostPort      = 80
-        }
-      ]
-    }
-  ])
-}
-
-# Create an Application Load Balancer
-resource "aws_lb" "api_lb" {
-  name               = "api-lb"
-  internal           = false
-  load_balancer_type = "application"
-  security_groups    = [aws_security_group.main.id]
-  subnets            = aws_subnet.public[*].id
-
-  enable_deletion_protection = false
-}
-
-# Create a target group
-resource "aws_lb_target_group" "api_tg" {
-  name        = "api-tg"
-  port        = 80
-  protocol    = "HTTP"
-  vpc_id      = aws_vpc.main.id
-  target_type = "ip"
-
-  health_check {
-    path                = "/"
-    interval            = 30
-    timeout             = 5
-    healthy_threshold   = 2
-    unhealthy_threshold = 2
-    matcher             = "200"
-  }
-}
-
-# Create a listener for the load balancer
-resource "aws_lb_listener" "api_listener" {
-  load_balancer_arn = aws_lb.api_lb.arn
-  port              = "80"
-  protocol          = "HTTP"
-
-  default_action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.api_tg.arn
-  }
-}
-
-# Create an ECS service
-resource "aws_ecs_service" "api" {
-  name            = "eisei-api-service"
-  cluster         = aws_ecs_cluster.main.id
-  task_definition = aws_ecs_task_definition.api.arn
-  launch_type     = "FARGATE"
-  desired_count   = 1
-
-  network_configuration {
-    subnets         = aws_subnet.public[*].id
-    security_groups = [aws_security_group.main.id]
-    assign_public_ip = true
+  root_block_device {
+    volume_size = 30
   }
 
-  load_balancer {
-    target_group_arn = aws_lb_target_group.api_tg.arn
-    container_name   = "api-container"
-    container_port   = 80
+  user_data = <<-EOF
+              #!/bin/bash
+              set -e  # Exit immediately if a command exits with a non-zero status
+
+              # Update the instance
+              yum update -y
+
+              # Install necessary system dependencies
+              sudo yum install -y python3 python3-pip git
+              sudo yum install -y mesa-libGL
+
+              # Verify installation
+              python3 --version
+              pip3 --version
+
+              # Clone the GitHub repository
+              git clone https://github.com/vumichien/eisei-ai-terraform.git /app
+
+              # Change to the app directory
+              cd /app/app
+
+              # Start FastAPI app on port 8080
+              nohup uvicorn main:app --host 0.0.0.0 --port 8080 &
+              EOF
+
+  tags = {
+    Name = "FastAPIAppInstance"
   }
 
   depends_on = [
-    aws_lb_listener.api_listener
+    aws_security_group.main
   ]
 }
 
-# Output the DNS name of the Load Balancer
-output "lb_dns_name" {
-  value = aws_lb.api_lb.dns_name
+# Output the public IP of the EC2 instance
+output "instance_public_ip" {
+  value = aws_instance.app_instance.public_ip
 }
