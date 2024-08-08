@@ -17,6 +17,9 @@ aws-vault add <profile_name>
 region = ap-northeast-1
 mfa_serial = arn:aws:iam::<aws_account_id>:mfa/<username>
 ```
+## Create AMI for Eisei AI API (Optional)
+- Start the the large instance (t2.xlarge) with the latest Amazon Linux 2023 AMI
+- Run the following commands in `create_ami.sh` to create the AMI
 
 ## Deploy Eisei AI API
 
