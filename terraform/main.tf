@@ -82,7 +82,7 @@ resource "aws_security_group" "main" {
 
 # Create an EC2 instance
 resource "aws_instance" "app_instance" {
-  ami                         = "ami-0f64af45aa96ba95c" # Replace with a valid Amazon Linux 2 AMI ID
+  ami                         = "ami-0e35aea09ae54a6db" # Replace with a valid Amazon Linux 2 AMI ID
   instance_type               = "t2.medium"
   subnet_id                   = element(aws_subnet.public[*].id, 0)
   vpc_security_group_ids      = [aws_security_group.main.id]
@@ -96,19 +96,8 @@ resource "aws_instance" "app_instance" {
               #!/bin/bash
               set -e  # Exit immediately if a command exits with a non-zero status
 
-              # Update the instance
-              yum update -y
-
-              # Install necessary system dependencies
-              sudo yum install -y python3 python3-pip git
-              sudo yum install -y mesa-libGL
-
-              # Verify installation
-              python3 --version
-              pip3 --version
-
-              # Clone the GitHub repository
-              git clone https://github.com/vumichien/eisei-ai-terraform.git /app
+              # Activate the virtual environment
+              source /home/ec2-user/venv/bin/activate
 
               # Change to the app directory
               cd /app/app

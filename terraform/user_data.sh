@@ -24,6 +24,3 @@ cd /app/app
 
 # Install application dependencies
 pip3 install -r requirements.txt
-
-# Start FastAPI app
-nohup uvicorn main:app --host 0.0.0.0 --port 80 &
