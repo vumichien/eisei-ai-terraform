@@ -6,3 +6,4 @@ imutils
 opencv-python
 scikit-learn
 ultralytics
+supervision
