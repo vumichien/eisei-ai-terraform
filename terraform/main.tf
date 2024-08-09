@@ -11,6 +11,17 @@ provider "aws" {
   region = "ap-northeast-1"
 }
 
+# Data block to query the latest AMI
+data "aws_ami" "latest_custom_ami" {
+  owners      = ["590183990078"] # Replace with the AWS account ID if needed
+  most_recent = true
+
+  filter {
+    name   = "name"
+    values = ["eisei-ai-*"] # Replace with your custom AMI name pattern
+  }
+}
+
 # Create a VPC
 resource "aws_vpc" "main" {
   cidr_block = "10.0.0.0/16"
@@ -82,8 +93,8 @@ resource "aws_security_group" "main" {
 
 # Create an EC2 instance
 resource "aws_instance" "app_instance" {
-  ami                         = "ami-0e35aea09ae54a6db"
-  instance_type               = "t2.micro"
+  ami                         = data.aws_ami.latest_custom_ami.id
+  instance_type               = "t2.small"
   subnet_id                   = element(aws_subnet.public[*].id, 0)
   vpc_security_group_ids      = [aws_security_group.main.id]
   associate_public_ip_address = true

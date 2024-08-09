@@ -18,15 +18,15 @@ def parse_detection(detections):
             "y": int(y_min),
             "width": width,
             "height": height,
-            "class_id": ""
-            if detections.class_id is None
-            else int(detections.class_id[i]),
-            "confidence": ""
-            if detections.confidence is None
-            else float(detections.confidence[i]),
-            "tracker_id": ""
-            if detections.tracker_id is None
-            else int(detections.tracker_id[i]),
+            "class_id": (
+                "" if detections.class_id is None else int(detections.class_id[i])
+            ),
+            "confidence": (
+                "" if detections.confidence is None else float(detections.confidence[i])
+            ),
+            "tracker_id": (
+                "" if detections.tracker_id is None else int(detections.tracker_id[i])
+            ),
         }
 
         if hasattr(detections, "data"):
@@ -47,8 +47,12 @@ def crop_images(image, output_directory, box):
     image = Image.fromarray(image)
     cropped_img = image.crop(box)
     resized_img = cropped_img.resize((640, 1024))
-    straight_box_img = resized_img.crop(((320 - 32), 468, (320 + 32), 756)).resize((224, 224))
-    value_box_img = resized_img.crop(((320 - 256), 468, (320 + 256), 884)).resize((224, 224))
+    straight_box_img = resized_img.crop(((320 - 32), 468, (320 + 32), 756)).resize(
+        (224, 224)
+    )
+    value_box_img = resized_img.crop(((320 - 256), 468, (320 + 256), 884)).resize(
+        (224, 224)
+    )
 
     # Create directories if they do not exist
     cropped_img_dir = os.path.join(output_directory, "cropped")

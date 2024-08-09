@@ -24,6 +24,7 @@ async def lifespan(app: FastAPI):
     # Clean up the ML models and release the resources
     ml_models.clear()
 
+
 app = FastAPI(lifespan=lifespan)
 
 
@@ -35,8 +36,8 @@ def detect_torque_wrench(image):
 
 
 def check_straight(image_file_name):
-    names = ['ng', 'ok']
-    image_folder = 'data/tmp/straight_box'
+    names = ["ng", "ok"]
+    image_folder = "data/tmp/straight_box"
     image_full_path = f"{image_folder}/{image_file_name}"
     predictions = ml_models["straight_model"](image_full_path)[0]
     prediction_label = predictions.probs.top1
@@ -45,8 +46,8 @@ def check_straight(image_file_name):
 
 
 def predict_value(image_file_name):
-    names = ['60_cNm_Bronz_18', '60_cNm_Bronz_20', 'NG']
-    image_folder = 'data/tmp/value_box'
+    names = ["60_cNm_Bronz_18", "60_cNm_Bronz_20", "NG"]
+    image_folder = "data/tmp/value_box"
     image_full_path = f"{image_folder}/{image_file_name}"
     predictions = ml_models["value_model"](image_full_path)[0]
     prediction_label = predictions.probs.top1
@@ -59,19 +60,28 @@ def detect_torque_wrench_value(image, image_file_name="temp.jpg"):
     print(parsed_results)
     if parsed_results is not None:
         for obj in parsed_results:
-            print("detect 60_cNm_Bronz with confidence=", obj['confidence'])
-            if obj['class_id'] == 0 and obj['confidence'] >= 0.8:
-                box = (obj['x'], obj['y'], obj['x'] + obj['width'], obj['y'] + obj['height'])
+            print("detect 60_cNm_Bronz with confidence=", obj["confidence"])
+            if obj["class_id"] == 0 and obj["confidence"] >= 0.8:
+                box = (
+                    obj["x"],
+                    obj["y"],
+                    obj["x"] + obj["width"],
+                    obj["y"] + obj["height"],
+                )
                 crop_images(image, output_directory="data/tmp/", box=box)
                 straight_label, straight_conf = check_straight(image_file_name)
-                print("straight_label=", straight_label, "straight_conf=", straight_conf)
+                print(
+                    "straight_label=", straight_label, "straight_conf=", straight_conf
+                )
                 value_label, value_conf = predict_value(image_file_name)
                 print("value_label=", value_label, "value_conf=", value_conf)
-                return [{"object": "60_cNm_Bronz", "confidence": obj['confidence']},
-                        {"straight": straight_label, "confidence": straight_conf},
-                        {"value": value_label, "confidence": value_conf}]
-            elif obj['class_id'] == 0 and obj['confidence'] < 0.8:
-                return [{"object": "60_cNm_Bronz", "confidence": obj['confidence']}]
+                return [
+                    {"object": "60_cNm_Bronz", "confidence": obj["confidence"]},
+                    {"straight": straight_label, "confidence": straight_conf},
+                    {"value": value_label, "confidence": value_conf},
+                ]
+            elif obj["class_id"] == 0 and obj["confidence"] < 0.8:
+                return [{"object": "60_cNm_Bronz", "confidence": obj["confidence"]}]
 
     else:
         return None, None
