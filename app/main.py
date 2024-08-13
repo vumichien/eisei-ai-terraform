@@ -8,8 +8,6 @@ from ultralytics import YOLO
 from contextlib import asynccontextmanager
 from utils import parse_detection, crop_images
 import supervision as sv
-import os
-import time
 
 ml_models = {}
 
@@ -36,7 +34,7 @@ def detect_torque_wrench(image):
 
 
 def check_straight(image_file_name):
-    names = ["ng", "ok"]
+    names = ["NG", "OK"]
     image_folder = "data/tmp/straight_box"
     image_full_path = f"{image_folder}/{image_file_name}"
     predictions = ml_models["straight_model"](image_full_path)[0]
@@ -75,38 +73,45 @@ def detect_torque_wrench_value(image, image_file_name="temp.jpg"):
                 )
                 value_label, value_conf = predict_value(image_file_name)
                 print("value_label=", value_label, "value_conf=", value_conf)
-                return [
-                    {"object": "60_cNm_Bronz", "confidence": obj["confidence"]},
-                    {"straight": straight_label, "confidence": straight_conf},
-                    {"value": value_label, "confidence": value_conf},
-                ]
+                return {
+                    "object": {
+                        "class": "60_cNm_Bronz",
+                        "confidence": obj["confidence"],
+                    },
+                    "straight": {"class": straight_label, "confidence": straight_conf},
+                    "value": {"class": value_label, "confidence": value_conf},
+                }
             elif obj["class_id"] == 0 and obj["confidence"] < 0.8:
-                return [{"object": "60_cNm_Bronz", "confidence": obj["confidence"]}]
+                return {
+                    {
+                        "object": {
+                            "class": "60_cNm_Bronz",
+                            "confidence": obj["confidence"],
+                        }
+                    }
+                }
 
     else:
-        return None, None
+        return None
 
 
 def infer(image):
-    start_time = time.time()
     image_arr = np.frombuffer(image, np.uint8)
     image = cv2.imdecode(image_arr, cv2.IMREAD_COLOR)
     image = cv2.resize(image, (1024, 1024))
     result = detect_torque_wrench_value(image)
-    output = {
-        "predictions": result,
-        "runtime": time.time() - start_time,
-    }
-    return output
+    return result
 
 
-@app.post("/process-image/")
+@app.post("/api/detect/")
 async def process_image(image: UploadFile = File(...)):
     filename = image.filename
     logging.info(f"Received process-image request for file: {filename}")
     image_data = await image.read()
     results = infer(image_data)
     logging.info("Returning JSON results")
+    if results is None:
+        return JSONResponse(content={})
     return JSONResponse(content=results)
 
 
