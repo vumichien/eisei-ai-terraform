@@ -21,9 +21,13 @@ logger.setLevel(logging.INFO)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Load the ML model
-    ml_models["torque_wrench_model"] = YOLO("models/torque-wrench-type-5.pt")
-    ml_models["straight_model"] = YOLO("models/straight-check-7.pt")
-    ml_models["value_model"] = YOLO("models/value-detect-8.pt")
+    ml_models["torque_wrench_model"] = YOLO("models/torque-wrench-type-5.onnx", task="detect")
+    ml_models["straight_model"] = YOLO("models/straight-check-7.onnx", task="classify")
+    ml_models["value_model"] = YOLO("models/value-detect-8.onnx", task="classify")
+    # ml_models["torque_wrench_model"] = YOLO("models/torque-wrench-type-5.pt", task="detect")
+    # ml_models["straight_model"] = YOLO("models/straight-check-7.pt", task="classify")
+    # ml_models["value_model"] = YOLO("models/value-detect-8.pt", task="classify")
+
     yield
     # Clean up the ML models and release the resources
     ml_models.clear()
@@ -34,7 +38,7 @@ app = FastAPI(lifespan=lifespan)
 
 def detect_torque_wrench(image):
     start_time = time.time()
-    predictions = ml_models["torque_wrench_model"](image)[0]
+    predictions = ml_models["torque_wrench_model"](image, imgsz=1024)[0]
     detections = sv.Detections.from_ultralytics(predictions)
     parsed_detections = parse_detection(detections)
     logger.info(f"Time taken for torque wrench detection: {time.time() - start_time}")
@@ -46,7 +50,7 @@ def check_straight(image_file_name):
     names = ["NG", "OK"]
     image_folder = "data/tmp/straight_box"
     image_full_path = f"{image_folder}/{image_file_name}"
-    predictions = ml_models["straight_model"](image_full_path)[0]
+    predictions = ml_models["straight_model"](image_full_path, imgsz=224)[0]
     prediction_label = predictions.probs.top1
     prediction_conf = predictions.probs.top1conf
     logger.info(f"Time taken for straight prediction: {time.time() - start_time}")
@@ -58,7 +62,7 @@ def predict_value(image_file_name):
     names = ["60_cNm_Bronz_18", "60_cNm_Bronz_20", "NG"]
     image_folder = "data/tmp/value_box"
     image_full_path = f"{image_folder}/{image_file_name}"
-    predictions = ml_models["value_model"](image_full_path)[0]
+    predictions = ml_models["value_model"](image_full_path, imgsz=224)[0]
     prediction_label = predictions.probs.top1
     prediction_conf = predictions.probs.top1conf
     logger.info(f"Time taken for value prediction: {time.time() - start_time}")

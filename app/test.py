@@ -7,6 +7,10 @@ torque_wrench_model = YOLO("models/torque-wrench-type-5.pt")
 straight_model = YOLO("models/straight-check-7.pt")
 value_model = YOLO("models/value-detect-8.pt")
 
+torque_wrench_model.export(format="onnx", imgsz=1024, dynamic=True)
+straight_model.export(format="onnx")
+value_model.export(format="onnx")
+
 
 # def detect_torque_wrench(image_path):
 #     predictions = torque_wrench_model(image_path)[0]
