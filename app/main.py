@@ -13,7 +13,9 @@ import time
 ml_models = {}
 
 # Set up logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
@@ -21,7 +23,9 @@ logger.setLevel(logging.INFO)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Load the ML model
-    ml_models["torque_wrench_model"] = YOLO("models/torque-wrench-type-5.onnx", task="detect")
+    ml_models["torque_wrench_model"] = YOLO(
+        "models/torque-wrench-type-5.onnx", task="detect"
+    )
     ml_models["straight_model"] = YOLO("models/straight-check-7.onnx", task="classify")
     ml_models["value_model"] = YOLO("models/value-detect-8.onnx", task="classify")
     # ml_models["torque_wrench_model"] = YOLO("models/torque-wrench-type-5.pt", task="detect")
@@ -84,7 +88,9 @@ def detect_torque_wrench_value(image, image_file_name="temp.jpg"):
                 )
                 crop_images(image, output_directory="data/tmp/", box=box)
                 straight_label, straight_conf = check_straight(image_file_name)
-                logger.info(f"Straight label={straight_label}, Straight confidence={straight_conf}")
+                logger.info(
+                    f"Straight label={straight_label}, Straight confidence={straight_conf}"
+                )
                 value_label, value_conf = predict_value(image_file_name)
                 logger.info(f"Value label={value_label}, Value confidence={value_conf}")
                 return {
