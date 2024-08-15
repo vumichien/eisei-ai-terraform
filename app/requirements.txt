@@ -9,3 +9,4 @@ ultralytics
 supervision
 onnx
 onnxruntime
+onnxslim>=0.1.31
