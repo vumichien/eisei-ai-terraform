@@ -1,15 +1,19 @@
 from ultralytics import YOLO
 import supervision as sv
 from utils import parse_detection, crop_images
+import onnxruntime as ort
+import torch
+
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 source = "data"
 torque_wrench_model = YOLO("models/torque-wrench-type-5.pt")
 straight_model = YOLO("models/straight-check-7.pt")
 value_model = YOLO("models/value-detect-8.pt")
 
-torque_wrench_model.export(format="onnx", imgsz=1024, dynamic=True)
-straight_model.export(format="onnx")
-value_model.export(format="onnx")
+torque_wrench_model.export(format="onnx", imgsz=1024, int8=True)
+straight_model.export(format="onnx", imgsz=224, int8=True)
+value_model.export(format="onnx", imgsz=224, int8=True)
 
 
 # def detect_torque_wrench(image_path):

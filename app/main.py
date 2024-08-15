@@ -28,9 +28,9 @@ async def lifespan(app: FastAPI):
     )
     ml_models["straight_model"] = YOLO("models/straight-check-7.onnx", task="classify")
     ml_models["value_model"] = YOLO("models/value-detect-8.onnx", task="classify")
-    # ml_models["torque_wrench_model"] = YOLO("models/torque-wrench-type-5.pt", task="detect")
-    # ml_models["straight_model"] = YOLO("models/straight-check-7.pt", task="classify")
-    # ml_models["value_model"] = YOLO("models/value-detect-8.pt", task="classify")
+    # ml_models["torque_wrench_model"] = YOLO("models/torque-wrench-type-5.pt")
+    # ml_models["straight_model"] = YOLO("models/straight-check-7.pt")
+    # ml_models["value_model"] = YOLO("models/value-detect-8.pt")
 
     yield
     # Clean up the ML models and release the resources
